@@ -1,0 +1,822 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="default" />
+<meta name="apple-mobile-web-app-title" content="المرتجعات" />
+<meta name="theme-color" content="#185FA5" />
+<title>نظام المرتجعات</title>
+<link rel="manifest" href="data:application/json,{%22name%22:%22نظام المرتجعات%22,%22short_name%22:%22المرتجعات%22,%22start_url%22:%22.%22,%22display%22:%22standalone%22,%22background_color%22:%22%23ffffff%22,%22theme_color%22:%22%23185FA5%22}" />
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f5; --bg3: #eeeeee;
+    --text: #1a1a1a; --text2: #666666; --text3: #999999;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.2);
+    --blue: #185FA5; --blue-light: #E6F1FB; --blue-dark: #0C447C;
+    --green: #1D9E75; --green-light: #E1F5EE;
+    --amber-light: #FAEEDA; --amber-dark: #854F0B;
+    --red: #A32D2D;
+    --radius: 8px; --radius-lg: 12px;
+    --font: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1a1a1a; --bg2: #2a2a2a; --bg3: #333333;
+      --text: #f0f0f0; --text2: #aaaaaa; --text3: #777777;
+      --border: rgba(255,255,255,0.12); --border2: rgba(255,255,255,0.2);
+      --blue-light: #0C2A45; --green-light: #0a2e20;
+      --amber-light: #2e1f05; --amber-dark: #EF9F27;
+    }
+  }
+  body { font-family: var(--font); background: var(--bg3); color: var(--text); min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; background: var(--bg3); min-height: 100vh; padding-bottom: 80px; }
+
+  /* Header */
+  .header { background: var(--blue); color: #fff; padding: 16px 16px 12px; display: flex; align-items: center; gap: 12px; position: sticky; top: 0; z-index: 10; }
+  .logo { width: 38px; height: 38px; border-radius: var(--radius); background: rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 18px; font-weight: 600; }
+  .header-text h1 { font-size: 16px; font-weight: 600; }
+  .header-text p { font-size: 11px; opacity: 0.8; margin-top: 2px; }
+
+  /* Bottom Tab Bar */
+  .tab-bar { position: fixed; bottom: 0; left: 50%; transform: translateX(-50%); width: 100%; max-width: 480px; background: var(--bg); border-top: 0.5px solid var(--border); display: flex; z-index: 20; }
+  .tab { flex: 1; padding: 10px 4px 14px; text-align: center; font-size: 11px; color: var(--text3); cursor: pointer; border: none; background: transparent; font-family: var(--font); transition: color 0.2s; }
+  .tab.active { color: var(--blue); font-weight: 600; }
+  .tab-icon { font-size: 20px; display: block; margin-bottom: 3px; }
+
+  /* Sections */
+  .section { display: none; padding: 16px; }
+  .section.active { display: block; }
+
+  /* Cards */
+  .card { background: var(--bg); border-radius: var(--radius-lg); padding: 16px; margin-bottom: 12px; border: 0.5px solid var(--border); }
+  .section-title { font-size: 12px; font-weight: 600; color: var(--text3); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+
+  /* Form */
+  .field { margin-bottom: 14px; }
+  .field:last-child { margin-bottom: 0; }
+  .field label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 5px; font-weight: 500; }
+  .field input { width: 100%; padding: 10px 12px; font-size: 15px; border: 0.5px solid var(--border2); border-radius: var(--radius); background: var(--bg2); color: var(--text); font-family: var(--font); -webkit-appearance: none; }
+  .field input:focus { outline: none; border-color: var(--blue); background: var(--bg); }
+
+  /* Upload */
+  .upload-box { border: 1.5px dashed var(--border2); border-radius: var(--radius); padding: 20px; text-align: center; cursor: pointer; background: var(--bg2); transition: all 0.2s; }
+  .upload-box.has-file { border-color: var(--green); background: var(--green-light); }
+  .upload-box .uicon { font-size: 28px; display: block; margin-bottom: 6px; }
+  .upload-box p { font-size: 13px; color: var(--text2); }
+
+  /* Multi-photo grid */
+  .photo-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; margin-bottom: 10px; }
+  .photo-grid:empty { display: none; margin-bottom: 0; }
+  .photo-tile { position: relative; aspect-ratio: 1; border-radius: var(--radius); overflow: hidden; border: 0.5px solid var(--border); background: var(--bg2); }
+  .photo-tile img { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-remove { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: rgba(0,0,0,0.6); color: #fff; border: none; font-size: 11px; display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; font-family: var(--font); }
+
+  /* Buttons */
+  .btn { width: 100%; padding: 14px; border-radius: var(--radius); font-size: 15px; font-weight: 600; cursor: pointer; border: none; font-family: var(--font); transition: all 0.2s; }
+  .btn-primary { background: var(--blue); color: #fff; }
+  .btn-primary:active { background: var(--blue-dark); transform: scale(0.98); }
+  .btn-primary:disabled { background: #B5D4F4; cursor: not-allowed; }
+  .btn-sm { padding: 7px 14px; font-size: 13px; border-radius: var(--radius); cursor: pointer; border: 0.5px solid var(--border2); background: var(--bg2); color: var(--text); font-family: var(--font); white-space: nowrap; }
+  .btn-sm:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-success { background: var(--green); color: #fff; padding: 8px 14px; font-size: 13px; border-radius: var(--radius); border: none; cursor: pointer; font-family: var(--font); font-weight: 600; }
+  .btn-success:active { transform: scale(0.97); }
+
+  /* Badges */
+  .badge { display: inline-block; padding: 4px 10px; border-radius: 20px; font-size: 11px; font-weight: 600; }
+  .badge-pending { background: var(--amber-light); color: var(--amber-dark); }
+  .badge-done { background: var(--green-light); color: var(--green); }
+
+  /* Return items */
+  .return-item { padding: 14px 0; border-bottom: 0.5px solid var(--border); }
+  .return-item:last-child { border-bottom: none; padding-bottom: 0; }
+  .return-item:first-child { padding-top: 0; }
+  .item-row { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 6px; }
+  .item-info { flex: 1; min-width: 0; }
+  .order-id { font-size: 15px; font-weight: 600; color: var(--text); }
+  .track-num { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  .item-meta { font-size: 12px; color: var(--text3); margin-bottom: 8px; }
+  .thumb { width: 44px; height: 44px; border-radius: var(--radius); object-fit: cover; border: 0.5px solid var(--border); flex-shrink: 0; cursor: pointer; }
+  .thumb-ph { width: 44px; height: 44px; border-radius: var(--radius); background: var(--bg2); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+  .thumb-wrap { position: relative; flex-shrink: 0; cursor: pointer; }
+  .thumb-count { position: absolute; bottom: -4px; right: -4px; background: var(--blue); color: #fff; font-size: 9px; font-weight: 700; padding: 1px 5px; border-radius: 10px; border: 1.5px solid var(--bg); }
+
+  /* Metrics */
+  .metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 10px; margin-bottom: 16px; }
+  .metric { background: var(--bg); border-radius: var(--radius-lg); padding: 14px 10px; text-align: center; border: 0.5px solid var(--border); }
+  .metric .val { font-size: 26px; font-weight: 700; color: var(--text); }
+  .metric .lbl { font-size: 11px; color: var(--text2); margin-top: 3px; }
+
+  /* Filter */
+  .filter-row { display: flex; gap: 6px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 2px; }
+  .filter-btn { padding: 6px 14px; border-radius: 20px; font-size: 13px; border: 0.5px solid var(--border2); background: transparent; color: var(--text2); cursor: pointer; font-family: var(--font); white-space: nowrap; }
+  .filter-btn.active { background: var(--blue); color: #fff; border-color: var(--blue); }
+
+  /* Search */
+  .search-container { display: flex; gap: 8px; margin-bottom: 10px; align-items: stretch; }
+  .search-box { display: flex; align-items: center; gap: 8px; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); padding: 0 12px; flex: 1; min-width: 0; }
+  .search-box input { flex: 1; min-width: 0; border: none; background: transparent; padding: 10px 0; font-size: 14px; color: var(--text); font-family: var(--font); }
+  .search-box input:focus { outline: none; }
+  .search-icon { font-size: 14px; color: var(--text3); flex-shrink: 0; }
+  .search-clear { background: transparent; border: none; color: var(--text3); font-size: 15px; cursor: pointer; padding: 4px; flex-shrink: 0; line-height: 1; }
+  .filter-toggle-btn { width: 42px; flex-shrink: 0; background: var(--bg2); border: 0.5px solid var(--border2); border-radius: var(--radius); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; position: relative; font-family: var(--font); }
+  .filter-toggle-btn.active { background: var(--blue-light); border-color: var(--blue); }
+  .filter-dot { position: absolute; top: -3px; left: -3px; width: 9px; height: 9px; border-radius: 50%; background: var(--blue); display: none; }
+  .filter-dot.show { display: block; }
+  .advanced-filters { display: none; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius-lg); padding: 14px; margin-bottom: 12px; }
+  .advanced-filters.show { display: block; }
+  .date-filter-row { display: flex; gap: 10px; }
+  .date-filter-row .field { flex: 1; margin-bottom: 0; }
+  .filter-reset-btn { width: 100%; margin-top: 10px; }
+  .result-count { font-size: 12px; color: var(--text3); margin-bottom: 10px; }
+
+  /* Sync bar */
+  .sync-bar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+
+  /* Empty */
+  .empty { text-align: center; padding: 2rem 0; color: var(--text3); font-size: 14px; }
+
+  /* Toast */
+  .toast { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); background: #1a1a1a; color: #fff; padding: 12px 20px; border-radius: var(--radius-lg); font-size: 13px; font-weight: 500; opacity: 0; transition: opacity 0.3s; pointer-events: none; z-index: 99; white-space: nowrap; max-width: 90vw; text-align: center; }
+  .toast.show { opacity: 1; }
+  .toast.success { background: var(--green); }
+  .toast.error { background: var(--red); }
+
+  /* Install banner */
+  .install-banner { background: var(--blue-light); border: 0.5px solid var(--blue); border-radius: var(--radius-lg); padding: 12px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+  .install-banner p { font-size: 12px; color: var(--blue); font-weight: 500; }
+  .install-banner button { padding: 6px 12px; background: var(--blue); color: #fff; border: none; border-radius: var(--radius); font-size: 12px; font-weight: 600; cursor: pointer; white-space: nowrap; font-family: var(--font); }
+  .install-banner .close-btn { background: transparent; color: var(--blue); font-size: 16px; padding: 0 4px; }
+
+  /* Lightbox */
+  .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: 100; display: none; align-items: center; justify-content: center; overflow: hidden; touch-action: none; }
+  .lightbox.show { display: flex; }
+  .lightbox-imgwrap { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; overflow: hidden; }
+  .lightbox img { max-width: 95vw; max-height: 90vh; object-fit: contain; border-radius: var(--radius); touch-action: none; user-select: none; -webkit-user-drag: none; cursor: zoom-in; transform-origin: center center; will-change: transform; }
+  .lightbox img.zoomed { cursor: grab; }
+  .lightbox img.dragging { cursor: grabbing; }
+  .lightbox-close { position: fixed; top: 16px; left: 16px; width: 36px; height: 36px; border-radius: 50%; background: rgba(255,255,255,0.2); color: #fff; font-size: 20px; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-family: var(--font); z-index: 2; }
+  .zoom-controls { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); display: flex; gap: 8px; z-index: 2; }
+  .zoom-btn { width: 42px; height: 42px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-size: 18px; font-weight: 600; display: flex; align-items: center; justify-content: center; cursor: pointer; border: none; font-family: var(--font); backdrop-filter: blur(4px); }
+  .zoom-btn:active { background: rgba(255,255,255,0.3); }
+  .zoom-pct { position: fixed; top: 20px; left: 50%; transform: translateX(-50%); color: #fff; font-size: 12px; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; z-index: 2; opacity: 0; transition: opacity 0.2s; pointer-events: none; }
+  .zoom-pct.show { opacity: 1; }
+  .gallery-counter { position: fixed; top: 20px; right: 16px; color: #fff; font-size: 12px; font-weight: 600; background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; z-index: 2; display: none; }
+  .gallery-counter.show { display: block; }
+  .gallery-nav { position: fixed; top: 50%; transform: translateY(-50%); width: 40px; height: 40px; border-radius: 50%; background: rgba(255,255,255,0.15); color: #fff; font-size: 22px; display: none; align-items: center; justify-content: center; cursor: pointer; border: none; font-family: var(--font); z-index: 2; }
+  .gallery-nav.show { display: flex; }
+  .gallery-prev { left: 12px; }
+  .gallery-next { right: 12px; }
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="header">
+    <div class="logo">R</div>
+    <div class="header-text">
+      <h1>نظام المرتجعات</h1>
+      <p id="syncStatus">جاري الاتصال...</p>
+    </div>
+  </div>
+
+  <!-- RECEIVER -->
+  <div id="receiver" class="section active">
+    <div id="installBanner" class="install-banner" style="display:none">
+      <p>اضغط "اضف للشاشة الرئيسية" لتثبيت الأب</p>
+      <button onclick="installApp()">تثبيت</button>
+      <button class="close-btn" onclick="document.getElementById('installBanner').style.display='none'">x</button>
+    </div>
+    <p class="section-title">تسجيل مرتجع جديد</p>
+    <div class="card">
+      <div class="field"><label>Order ID</label><input type="text" id="orderId" placeholder="#ORD-4521" /></div>
+      <div class="field"><label>Track Number</label><input type="text" id="trackNum" placeholder="EGX123456789" /></div>
+      <div class="field"><label>Received By</label><input type="text" id="receivedBy" placeholder="اسمك" /></div>
+      <div class="field"><label>Date</label><input type="date" id="recDate" /></div>
+      <div class="field">
+        <label>صور البوليصة</label>
+        <div class="photo-grid" id="photoGrid"></div>
+        <div class="upload-box" id="uploadBox" onclick="document.getElementById('photoInput').click()">
+          <span class="uicon">📷</span>
+          <p id="uploadText">اضغط لإضافة صورة (تقدر تختار أكتر من صورة)</p>
+          <input type="file" id="photoInput" accept="image/*" multiple style="display:none" onchange="handleUpload(this)" />
+        </div>
+      </div>
+      <button class="btn btn-primary" id="submitBtn" onclick="submitReturn()">تسجيل المرتجع</button>
+    </div>
+  </div>
+
+  <!-- REFUND -->
+  <div id="refund" class="section">
+    <div class="sync-bar">
+      <p class="section-title" style="margin:0">المرتجعات</p>
+      <button class="btn-sm" onclick="loadReturns()">تحديث</button>
+    </div>
+
+    <div class="search-container">
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="searchInput" placeholder="ابحث برقم الطلب / رقم الشحنة / الاسم" oninput="handleSearch(this.value)" />
+        <button class="search-clear" id="searchClear" style="display:none" onclick="clearSearch()">✕</button>
+      </div>
+      <button class="filter-toggle-btn" id="filterToggleBtn" onclick="toggleAdvancedFilters()">
+        ⚙️
+        <span class="filter-dot" id="filterDot"></span>
+      </button>
+    </div>
+
+    <div class="advanced-filters" id="advancedFilters">
+      <div class="date-filter-row">
+        <div class="field">
+          <label>من تاريخ</label>
+          <input type="date" id="dateFrom" onchange="applyDateFilters()" />
+        </div>
+        <div class="field">
+          <label>إلى تاريخ</label>
+          <input type="date" id="dateTo" onchange="applyDateFilters()" />
+        </div>
+      </div>
+      <button class="btn-sm filter-reset-btn" onclick="resetAllFilters()">إعادة ضبط الفلاتر</button>
+    </div>
+
+    <div class="filter-row">
+      <button class="filter-btn active" onclick="filterReturns('all', this)">الكل</button>
+      <button class="filter-btn" onclick="filterReturns('pending', this)">معلق</button>
+      <button class="filter-btn" onclick="filterReturns('done', this)">تم</button>
+    </div>
+
+    <p class="result-count" id="resultCount"></p>
+    <div class="card" id="returnsList"><div class="empty">جاري التحميل...</div></div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div id="dashboard" class="section">
+    <div class="sync-bar">
+      <p class="section-title" style="margin:0">ملخص</p>
+      <button class="btn-sm" onclick="loadReturns()">تحديث</button>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="val" id="totalCount">-</div><div class="lbl">إجمالي</div></div>
+      <div class="metric"><div class="val" id="pendingCount">-</div><div class="lbl">معلق</div></div>
+      <div class="metric"><div class="val" id="doneCount">-</div><div class="lbl">تم</div></div>
+    </div>
+    <div class="card" id="dashList"><div class="empty">جاري التحميل...</div></div>
+  </div>
+
+  <!-- Bottom Tab Bar -->
+  <div class="tab-bar">
+    <button class="tab active" onclick="switchTab('receiver', this)">
+      <span class="tab-icon">📦</span>المستلم
+    </button>
+    <button class="tab" onclick="switchTab('refund', this)">
+      <span class="tab-icon">💳</span>الريفوند
+    </button>
+    <button class="tab" onclick="switchTab('dashboard', this)">
+      <span class="tab-icon">📊</span>Dashboard
+    </button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="lightbox" id="lightbox">
+  <button class="lightbox-close" onclick="closeLightbox()">x</button>
+  <span class="zoom-pct" id="zoomPct">100%</span>
+  <span class="gallery-counter" id="galleryCounter"></span>
+  <button class="gallery-nav gallery-prev" id="galleryPrev" onclick="prevImage(event)">‹</button>
+  <button class="gallery-nav gallery-next" id="galleryNext" onclick="nextImage(event)">›</button>
+  <div class="lightbox-imgwrap" id="lightboxWrap">
+    <img id="lightboxImg" src="" />
+  </div>
+  <div class="zoom-controls">
+    <button class="zoom-btn" onclick="zoomStep(-0.5)">−</button>
+    <button class="zoom-btn" onclick="resetZoom()">↺</button>
+    <button class="zoom-btn" onclick="zoomStep(0.5)">+</button>
+  </div>
+</div>
+
+<script>
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxSKOR1Hnt1m1jqXS5Q72Hu5hp4dyHbsIvrGB_5pDyYk2tviXZZ7Foc6ShJDMJpzvY/exec";
+let allReturns = [];
+let uploadedPhotos = [];
+const MAX_PHOTOS = 6;
+let currentFilter = 'all';
+let searchQuery = '';
+let dateFrom = '';
+let dateTo = '';
+let deferredPrompt = null;
+let returnsPhotoMap = {};
+
+document.getElementById('recDate').valueAsDate = new Date();
+
+function getImgUrl(url) {
+  if (!url) return '';
+  if (url.startsWith('data:')) return url;
+  const match = url.match(/[?&]id=([^&]+)/);
+  if (match) return 'https://drive.google.com/thumbnail?id=' + match[1] + '&sz=w200';
+  return url;
+}
+
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  document.getElementById('installBanner').style.display = 'flex';
+});
+
+function installApp() {
+  if (deferredPrompt) { deferredPrompt.prompt(); deferredPrompt = null; }
+  document.getElementById('installBanner').style.display = 'none';
+}
+
+async function loadReturns() {
+  setStatus("جاري التحميل...");
+  try {
+    const res = await fetch(SCRIPT_URL + "?t=" + Date.now());
+    const data = await res.json();
+    if (Array.isArray(data)) {
+      allReturns = data;
+      renderReturnsList();
+      renderDashboard();
+      setStatus("متزامن مع Google Sheets ✓");
+    } else {
+      setStatus("خطأ في البيانات");
+    }
+  } catch (e) {
+    setStatus("تعذر الاتصال بالشيت");
+  }
+}
+
+function setStatus(msg) { document.getElementById('syncStatus').textContent = msg; }
+
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+  document.getElementById(tab).classList.add('active');
+  btn.classList.add('active');
+  if (tab === 'refund' || tab === 'dashboard') loadReturns();
+}
+
+/* ---- Multi-photo upload ---- */
+
+function handleUpload(input) {
+  if (!input.files || !input.files.length) return;
+  const files = Array.from(input.files);
+  const remaining = MAX_PHOTOS - uploadedPhotos.length;
+  if (remaining <= 0) {
+    showToast('الحد الأقصى ' + MAX_PHOTOS + ' صور', 'error');
+    input.value = '';
+    return;
+  }
+  const toProcess = files.slice(0, remaining);
+  if (files.length > remaining) {
+    showToast('اتضافت أول ' + remaining + ' صور فقط (الحد الأقصى ' + MAX_PHOTOS + ')', 'error');
+  }
+  toProcess.forEach(file => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const ratio = Math.min(1600 / img.width, 1600 / img.height, 1);
+        canvas.width = img.width * ratio;
+        canvas.height = img.height * ratio;
+        canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
+        uploadedPhotos.push(canvas.toDataURL('image/jpeg', 0.88));
+        renderPhotoGrid();
+      };
+      img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = '';
+}
+
+function removePhoto(idx) {
+  uploadedPhotos.splice(idx, 1);
+  renderPhotoGrid();
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = uploadedPhotos.map((p, i) => `
+    <div class="photo-tile">
+      <img src="${p}" />
+      <button type="button" class="photo-remove" onclick="removePhoto(${i})">✕</button>
+    </div>`).join('');
+  const box = document.getElementById('uploadBox');
+  const text = document.getElementById('uploadText');
+  if (uploadedPhotos.length) {
+    box.classList.add('has-file');
+    box.querySelector('.uicon').textContent = '➕';
+    text.textContent = `إضافة صور أكتر (${uploadedPhotos.length}/${MAX_PHOTOS})`;
+  } else {
+    box.classList.remove('has-file');
+    box.querySelector('.uicon').textContent = '📷';
+    text.textContent = 'اضغط لإضافة صورة (تقدر تختار أكتر من صورة)';
+  }
+}
+
+async function submitReturn() {
+  const orderId = document.getElementById('orderId').value.trim();
+  const trackNum = document.getElementById('trackNum').value.trim();
+  const receivedBy = document.getElementById('receivedBy').value.trim();
+  const recDate = document.getElementById('recDate').value;
+  if (!orderId || !trackNum || !receivedBy || !recDate) { showToast('اكمل كل الحقول', 'error'); return; }
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true; btn.textContent = 'جاري الحفظ...';
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({
+        action: "add", id: Date.now(), orderId, trackNum, receivedBy, recDate,
+        photos: uploadedPhotos,
+        photo: uploadedPhotos[0] || ""
+      })
+    });
+    showToast('تم التسجيل وحفظه في الشيت', 'success');
+    document.getElementById('orderId').value = '';
+    document.getElementById('trackNum').value = '';
+    document.getElementById('receivedBy').value = '';
+    document.getElementById('recDate').valueAsDate = new Date();
+    uploadedPhotos = [];
+    renderPhotoGrid();
+    document.getElementById('photoInput').value = '';
+  } catch (e) {
+    showToast('فشل الحفظ، حاول تاني', 'error');
+  }
+  btn.disabled = false; btn.textContent = 'تسجيل المرتجع';
+}
+
+function filterReturns(f, btn) {
+  currentFilter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  renderReturnsList();
+}
+
+/* ---- Search & advanced filters ---- */
+
+function handleSearch(value) {
+  searchQuery = value.trim().toLowerCase();
+  document.getElementById('searchClear').style.display = searchQuery ? 'block' : 'none';
+  renderReturnsList();
+}
+
+function clearSearch() {
+  searchQuery = '';
+  document.getElementById('searchInput').value = '';
+  document.getElementById('searchClear').style.display = 'none';
+  renderReturnsList();
+}
+
+function toggleAdvancedFilters() {
+  document.getElementById('advancedFilters').classList.toggle('show');
+  document.getElementById('filterToggleBtn').classList.toggle('active');
+}
+
+function applyDateFilters() {
+  dateFrom = document.getElementById('dateFrom').value;
+  dateTo = document.getElementById('dateTo').value;
+  updateFilterDot();
+  renderReturnsList();
+}
+
+function updateFilterDot() {
+  const dot = document.getElementById('filterDot');
+  dot.classList.toggle('show', !!(dateFrom || dateTo));
+}
+
+function resetAllFilters() {
+  dateFrom = ''; dateTo = '';
+  document.getElementById('dateFrom').value = '';
+  document.getElementById('dateTo').value = '';
+  updateFilterDot();
+  clearSearch();
+}
+
+function getFilteredReturns() {
+  return allReturns.filter(r => {
+    if (currentFilter !== 'all' && r.status !== currentFilter) return false;
+    if (searchQuery) {
+      const haystack = ((r.orderId || '') + ' ' + (r.trackNum || '') + ' ' + (r.receivedBy || '')).toLowerCase();
+      if (!haystack.includes(searchQuery)) return false;
+    }
+    if (dateFrom && r.recDate && r.recDate < dateFrom) return false;
+    if (dateTo && r.recDate && r.recDate > dateTo) return false;
+    return true;
+  });
+}
+
+/* ---- Photos helper (supports old single "photo" and new "photos" array) ---- */
+
+function getPhotosArray(r) {
+  if (Array.isArray(r.photos)) return r.photos.filter(Boolean);
+  if (typeof r.photos === 'string' && r.photos) {
+    try {
+      const parsed = JSON.parse(r.photos);
+      if (Array.isArray(parsed)) return parsed.filter(Boolean);
+    } catch (e) {}
+    return r.photos.split(',').map(s => s.trim()).filter(Boolean);
+  }
+  if (r.photo) return [r.photo];
+  return [];
+}
+
+/* ------------------------------------ */
+
+function renderReturnsList() {
+  const list = document.getElementById('returnsList');
+  const filtered = getFilteredReturns();
+  const countEl = document.getElementById('resultCount');
+  if (countEl) {
+    countEl.textContent = allReturns.length
+      ? `${filtered.length} من ${allReturns.length} مرتجع`
+      : '';
+  }
+  if (!filtered.length) { list.innerHTML = '<div class="empty">لا يوجد نتائج مطابقة</div>'; return; }
+
+  returnsPhotoMap = {};
+  filtered.forEach(r => { returnsPhotoMap[r.id] = getPhotosArray(r); });
+
+  list.innerHTML = filtered.slice().reverse().map(r => {
+    const photos = returnsPhotoMap[r.id] || [];
+    const thumbHtml = photos.length
+      ? `<div class="thumb-wrap" onclick="openLightboxById('${r.id}')">
+           <img src="${getImgUrl(photos[0])}" class="thumb" onerror="this.parentElement.style.display='none'" />
+           ${photos.length > 1 ? `<span class="thumb-count">+${photos.length - 1}</span>` : ''}
+         </div>`
+      : '<div class="thumb-ph">📄</div>';
+    return `
+    <div class="return-item">
+      <div class="item-row">
+        <div style="display:flex;align-items:center;gap:10px;flex:1;min-width:0;">
+          ${thumbHtml}
+          <div class="item-info">
+            <div class="order-id">${r.orderId}</div>
+            <div class="track-num">${r.trackNum}</div>
+          </div>
+        </div>
+        <span class="badge ${r.status === 'pending' ? 'badge-pending' : 'badge-done'}">${r.status === 'pending' ? 'معلق' : 'تم'}</span>
+      </div>
+      <div class="item-meta">بواسطة: ${r.receivedBy} &bull; ${r.recDate}${r.refundDate ? ' &bull; ' + r.refundDate : ''}</div>
+      ${r.status === 'pending'
+        ? `<button class="btn-success" onclick="markRefund('${r.id}', this)">تم الريفوند على شوبيفاي</button>`
+        : '<span style="font-size:12px;color:var(--green);font-weight:600;">تم الريفوند ✓</span>'}
+    </div>`;
+  }).join('');
+}
+
+async function markRefund(id, btn) {
+  btn.disabled = true; btn.textContent = 'جاري...';
+  const today = new Date().toISOString().split('T')[0];
+  try {
+    await fetch(SCRIPT_URL, {
+      method: "POST", mode: "no-cors",
+      headers: { "Content-Type": "text/plain" },
+      body: JSON.stringify({ action: "refund", id, refundDate: today })
+    });
+    showToast('تم تسجيل الريفوند في الشيت', 'success');
+    setTimeout(() => loadReturns(), 1500);
+  } catch (e) {
+    showToast('فشل التحديث، حاول تاني', 'error');
+    btn.disabled = false; btn.textContent = 'تم الريفوند على شوبيفاي';
+  }
+}
+
+function renderDashboard() {
+  document.getElementById('totalCount').textContent = allReturns.length;
+  document.getElementById('pendingCount').textContent = allReturns.filter(r => r.status === 'pending').length;
+  document.getElementById('doneCount').textContent = allReturns.filter(r => r.status === 'done').length;
+  const dash = document.getElementById('dashList');
+  if (!allReturns.length) { dash.innerHTML = '<div class="empty">لا يوجد بيانات</div>'; return; }
+  dash.innerHTML = allReturns.slice().reverse().map(r => `
+    <div class="return-item">
+      <div class="item-row">
+        <div class="item-info"><div class="order-id">${r.orderId}</div><div class="track-num">${r.trackNum} &bull; ${r.receivedBy}</div></div>
+        <span class="badge ${r.status === 'pending' ? 'badge-pending' : 'badge-done'}">${r.status === 'pending' ? 'معلق' : 'تم'}</span>
+      </div>
+      <div class="item-meta">${r.recDate}${r.refundDate ? ' &bull; ريفوند: ' + r.refundDate : ''}</div>
+    </div>`).join('');
+}
+
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.className = 'toast ' + (type || '');
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+/* ---- Lightbox: zoom, pan, pinch, gallery navigation ---- */
+const MIN_ZOOM = 1, MAX_ZOOM = 4;
+let zoomLevel = 1, panX = 0, panY = 0;
+let isPanning = false, panStartX = 0, panStartY = 0;
+let pinchStartDist = 0, pinchStartZoom = 1;
+let lastTapTime = 0;
+let swipeStartX = 0, swipeStartY = 0;
+let currentGalleryPhotos = [], currentGalleryIndex = 0;
+
+function openLightboxById(id) {
+  const photos = returnsPhotoMap[id] || [];
+  if (!photos.length) return;
+  openLightbox(photos, 0);
+}
+
+function openLightbox(photos, index) {
+  currentGalleryPhotos = Array.isArray(photos) ? photos : [photos];
+  currentGalleryIndex = index || 0;
+  showGalleryImage();
+  document.getElementById("lightbox").classList.add("show");
+  document.body.style.overflow = "hidden";
+}
+
+function showGalleryImage() {
+  const img = document.getElementById("lightboxImg");
+  img.src = getImgUrl(currentGalleryPhotos[currentGalleryIndex]);
+  resetZoom();
+  updateGalleryUI();
+}
+
+function updateGalleryUI() {
+  const counter = document.getElementById('galleryCounter');
+  const prev = document.getElementById('galleryPrev');
+  const next = document.getElementById('galleryNext');
+  if (currentGalleryPhotos.length > 1) {
+    counter.textContent = (currentGalleryIndex + 1) + ' / ' + currentGalleryPhotos.length;
+    counter.classList.add('show');
+    prev.classList.add('show');
+    next.classList.add('show');
+  } else {
+    counter.classList.remove('show');
+    prev.classList.remove('show');
+    next.classList.remove('show');
+  }
+}
+
+function nextImage(e) {
+  if (e) e.stopPropagation();
+  if (currentGalleryPhotos.length < 2) return;
+  currentGalleryIndex = (currentGalleryIndex + 1) % currentGalleryPhotos.length;
+  showGalleryImage();
+}
+
+function prevImage(e) {
+  if (e) e.stopPropagation();
+  if (currentGalleryPhotos.length < 2) return;
+  currentGalleryIndex = (currentGalleryIndex - 1 + currentGalleryPhotos.length) % currentGalleryPhotos.length;
+  showGalleryImage();
+}
+
+function closeLightbox() {
+  document.getElementById("lightbox").classList.remove("show");
+  document.body.style.overflow = "";
+  resetZoom();
+  currentGalleryPhotos = [];
+}
+
+function applyZoomTransform() {
+  const img = document.getElementById("lightboxImg");
+  img.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomLevel})`;
+  img.classList.toggle('zoomed', zoomLevel > 1);
+  img.style.cursor = zoomLevel > 1 ? 'grab' : 'zoom-in';
+  showZoomPct();
+}
+
+function showZoomPct() {
+  const pct = document.getElementById('zoomPct');
+  pct.textContent = Math.round(zoomLevel * 100) + '%';
+  pct.classList.add('show');
+  clearTimeout(showZoomPct._t);
+  showZoomPct._t = setTimeout(() => pct.classList.remove('show'), 900);
+}
+
+function clampPan() {
+  const maxOffset = (zoomLevel - 1) * 140;
+  panX = Math.max(-maxOffset, Math.min(maxOffset, panX));
+  panY = Math.max(-maxOffset, Math.min(maxOffset, panY));
+}
+
+function setZoom(newZoom) {
+  zoomLevel = Math.max(MIN_ZOOM, Math.min(MAX_ZOOM, newZoom));
+  if (zoomLevel === MIN_ZOOM) { panX = 0; panY = 0; }
+  clampPan();
+  applyZoomTransform();
+}
+
+function zoomStep(delta) { setZoom(zoomLevel + delta); }
+
+function resetZoom() {
+  zoomLevel = 1; panX = 0; panY = 0;
+  applyZoomTransform();
+}
+
+document.addEventListener('DOMContentLoaded', initLightboxEvents);
+initLightboxEvents();
+
+function initLightboxEvents() {
+  const lbImg = document.getElementById("lightboxImg");
+  const lbWrap = document.getElementById("lightboxWrap");
+  if (!lbImg || lbImg._zoomInit) return;
+  lbImg._zoomInit = true;
+
+  lbWrap.addEventListener('click', (e) => {
+    if (e.target === lbWrap) closeLightbox();
+  });
+
+  lbImg.addEventListener('dblclick', (e) => {
+    e.stopPropagation();
+    setZoom(zoomLevel > 1 ? 1 : 2.5);
+  });
+
+  lbImg.addEventListener('mousedown', (e) => {
+    if (zoomLevel <= 1) return;
+    isPanning = true;
+    panStartX = e.clientX - panX;
+    panStartY = e.clientY - panY;
+    lbImg.classList.add('dragging');
+    e.preventDefault();
+  });
+  window.addEventListener('mousemove', (e) => {
+    if (!isPanning) return;
+    panX = e.clientX - panStartX;
+    panY = e.clientY - panStartY;
+    clampPan();
+    applyZoomTransform();
+  });
+  window.addEventListener('mouseup', () => {
+    if (isPanning) { isPanning = false; lbImg.classList.remove('dragging'); }
+  });
+
+  lbWrap.addEventListener('wheel', (e) => {
+    if (!document.getElementById('lightbox').classList.contains('show')) return;
+    e.preventDefault();
+    setZoom(zoomLevel - e.deltaY * 0.0025);
+  }, { passive: false });
+
+  function touchDist(t1, t2) {
+    const dx = t1.clientX - t2.clientX, dy = t1.clientY - t2.clientY;
+    return Math.hypot(dx, dy);
+  }
+
+  lbImg.addEventListener('touchstart', (e) => {
+    if (e.touches.length === 2) {
+      pinchStartDist = touchDist(e.touches[0], e.touches[1]);
+      pinchStartZoom = zoomLevel;
+    } else if (e.touches.length === 1) {
+      swipeStartX = e.touches[0].clientX;
+      swipeStartY = e.touches[0].clientY;
+      const now = Date.now();
+      if (now - lastTapTime < 300) {
+        setZoom(zoomLevel > 1 ? 1 : 2.5);
+        lastTapTime = 0;
+      } else {
+        lastTapTime = now;
+      }
+      if (zoomLevel > 1) {
+        isPanning = true;
+        panStartX = e.touches[0].clientX - panX;
+        panStartY = e.touches[0].clientY - panY;
+      }
+    }
+  }, { passive: true });
+
+  lbImg.addEventListener('touchmove', (e) => {
+    if (e.touches.length === 2) {
+      e.preventDefault();
+      const dist = touchDist(e.touches[0], e.touches[1]);
+      setZoom(pinchStartZoom * (dist / pinchStartDist));
+    } else if (e.touches.length === 1 && isPanning) {
+      e.preventDefault();
+      panX = e.touches[0].clientX - panStartX;
+      panY = e.touches[0].clientY - panStartY;
+      clampPan();
+      applyZoomTransform();
+    }
+  }, { passive: false });
+
+  lbImg.addEventListener('touchend', (e) => {
+    if (e.touches.length === 0) {
+      isPanning = false;
+      if (zoomLevel === 1 && e.changedTouches && e.changedTouches[0]) {
+        const dx = e.changedTouches[0].clientX - swipeStartX;
+        const dy = e.changedTouches[0].clientY - swipeStartY;
+        if (Math.abs(dx) > 60 && Math.abs(dx) > Math.abs(dy) * 1.5) {
+          if (dx < 0) nextImage(); else prevImage();
+        }
+      }
+    }
+  });
+
+  document.addEventListener('keydown', (e) => {
+    if (!document.getElementById('lightbox').classList.contains('show')) return;
+    if (e.key === 'Escape') closeLightbox();
+    else if (e.key === 'ArrowRight') nextImage();
+    else if (e.key === 'ArrowLeft') prevImage();
+  });
+}
+
+loadReturns();
+</script>
+</body>
+</html>
